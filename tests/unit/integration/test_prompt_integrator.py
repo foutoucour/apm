@@ -197,7 +197,7 @@ Some prompt content."""
     def test_update_gitignore_skips_if_exists(self):
         """Test that gitignore update is skipped if pattern exists."""
         gitignore = self.project_root / ".gitignore"
-        gitignore.write_text(".github/prompts/*-apm.prompt.md\n")
+        gitignore.write_text(".github/prompts/*-apm.prompt.md\n.claude/prompts/*-apm.prompt.md\n")
         
         updated = self.integrator.update_gitignore_for_integrated_prompts(self.project_root)
         

@@ -61,8 +61,8 @@ Skill names are validated per the [agentskills.io](https://agentskills.io/) spec
 ```
 .github/skills/
 ├── mcp-builder/           # From ComposioHQ/awesome-claude-skills/mcp-builder
-├── design-guidelines/     # From danielmeppiel/design-guidelines
-└── compliance-rules/      # From danielmeppiel/compliance-rules
+├── design-guidelines/     # From microsoft/apm-sample-package
+└── apm-sample-package/    # From microsoft/apm-sample-package (alternate name)
 ```
 
 ### Step 3: Primitive Integration
@@ -276,7 +276,7 @@ APM automatically detects package types:
 | Has | Type | Detection |
 |-----|------|-----------|
 | `apm.yml` only | APM Package | Standard APM primitives |
-| `SKILL.md` only | Claude Skill | Auto-generates `apm.yml` |
+| `SKILL.md` only | Claude Skill | Treated as native skill |
 | Both files | Hybrid Package | Best of both worlds |
 
 ## Target Detection

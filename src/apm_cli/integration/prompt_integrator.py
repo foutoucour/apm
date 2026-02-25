@@ -151,6 +151,13 @@ class PromptIntegrator:
         prompts_dir = project_root / ".github" / "prompts"
         prompts_dir.mkdir(parents=True, exist_ok=True)
         
+        # Also target .claude/prompts/ when .claude/ folder exists (dual-target)
+        claude_prompts_dir = None
+        claude_dir = project_root / ".claude"
+        if claude_dir.exists() and claude_dir.is_dir():
+            claude_prompts_dir = claude_dir / "prompts"
+            claude_prompts_dir.mkdir(parents=True, exist_ok=True)
+        
         # Process each prompt file - always overwrite
         files_integrated = 0
         target_paths = []
@@ -164,6 +171,11 @@ class PromptIntegrator:
             total_links_resolved += links_resolved
             files_integrated += 1
             target_paths.append(target_path)
+            
+            # Copy to .claude/prompts/ as well
+            if claude_prompts_dir:
+                claude_target = claude_prompts_dir / target_filename
+                self.copy_prompt(source_file, claude_target)
         
         return IntegrationResult(
             files_integrated=files_integrated,
@@ -182,16 +194,18 @@ class PromptIntegrator:
         """
         stats = {'files_removed': 0, 'errors': 0}
         
-        prompts_dir = project_root / ".github" / "prompts"
-        if not prompts_dir.exists():
-            return stats
-        
-        for prompt_file in prompts_dir.glob("*-apm.prompt.md"):
-            try:
-                prompt_file.unlink()
-                stats['files_removed'] += 1
-            except Exception:
-                stats['errors'] += 1
+        for prompts_dir in [
+            project_root / ".github" / "prompts",
+            project_root / ".claude" / "prompts",
+        ]:
+            if not prompts_dir.exists():
+                continue
+            for prompt_file in prompts_dir.glob("*-apm.prompt.md"):
+                try:
+                    prompt_file.unlink()
+                    stats['files_removed'] += 1
+                except Exception:
+                    stats['errors'] += 1
         
         return stats
     
@@ -206,6 +220,7 @@ class PromptIntegrator:
         """
         gitignore_path = project_root / ".gitignore"
         pattern = ".github/prompts/*-apm.prompt.md"
+        claude_pattern = ".claude/prompts/*-apm.prompt.md"
         
         # Read current content
         current_content = []
@@ -216,17 +231,24 @@ class PromptIntegrator:
             except Exception:
                 return False
         
-        # Check if pattern already exists
-        if any(pattern in line for line in current_content):
+        # Check which patterns need to be added
+        patterns_to_add = []
+        for p in [pattern, claude_pattern]:
+            if not any(p in line for line in current_content):
+                patterns_to_add.append(p)
+        
+        if not patterns_to_add:
             return False
         
-        # Add pattern to .gitignore
+        # Add patterns to .gitignore
         try:
             with open(gitignore_path, "a", encoding="utf-8") as f:
                 # Add a blank line before our entry if file isn't empty
                 if current_content and current_content[-1].strip():
                     f.write("\n")
-                f.write(f"\n# APM integrated prompts\n{pattern}\n")
+                f.write(f"\n# APM integrated prompts\n")
+                for p in patterns_to_add:
+                    f.write(f"{p}\n")
             return True
         except Exception:
             return False
